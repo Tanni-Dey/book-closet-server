@@ -18,6 +18,15 @@ async function run() {
     try {
         await client.connect();
         const bookCollection = client.db("bookCloset").collection("book");
+
+
+        //load all books
+        app.get('/books', async (req, res) => {
+            const query = {}
+            const cursor = bookCollection.find(query);
+            const allBooks = await cursor.toArray();
+            res.send(allBooks);
+        })
     }
 
     finally {
