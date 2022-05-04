@@ -31,7 +31,6 @@ async function run() {
         //load single book with id
         app.get('/book/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id)
             const query = { _id: ObjectId(id) };
             const oneBook = await bookCollection.findOne(query)
             res.send(oneBook)
@@ -41,7 +40,6 @@ async function run() {
         app.put('/book/:id', async (req, res) => {
             const id = req.params.id;
             const prevQuantity = req.body.updateQuantity
-            console.log(req.body)
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
             const updateBook = {
@@ -51,19 +49,13 @@ async function run() {
             const book = await bookCollection.updateOne(filter, updateBook, options)
             res.send(book)
         })
-        //update quantity
-        // app.put('/book/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     // const prevQuantity = req.body.quantity;
-        //     const prevboook = req.body;
-        //     const filter = { _id: ObjectId(id) };
-        //     const options = { upsert: true };
-        //     const updateBook = {
-        //         $set: { prevboook }
-        //     }
-        //     const book = await bookCollection.updateOne(filter, updateBook, options)
-        //     res.send(book)
-        // })
+
+        //add book api
+        app.post('/books', async (req, res) => {
+            const newBook = req.body;
+            const addBook = await bookCollection.insertOne(newBook);
+            res.send(addBook)
+        })
 
     }
 
