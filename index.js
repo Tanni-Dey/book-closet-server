@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const app = express()
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 5000
@@ -9,6 +10,21 @@ const port = process.env.PORT || 5000
 app.use(cors());
 app.use(express.json());
 
+
+function verifyJwt(req, res, next) {
+    const autheader = req.headers.authorization
+    if (!autheader) {
+        return res.status(401).send({ message: 'Unauthoried access' })
+    }
+    const userToken = autheader.split(' ')[1];
+    jwt.verify(userToken, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden Access' })
+        }
+        req.decoded = decoded;
+        next()
+    })
+}
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.uxezt.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
@@ -19,6 +35,12 @@ async function run() {
         await client.connect();
         const bookCollection = client.db("bookCloset").collection("book");
 
+
+        app.post('/login', async (req, res) => {
+            const user = req.body;
+            const accessToken = await jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2d' });
+            res.send({ accessToken })
+        })
 
         //load all books
         app.get('/books', async (req, res) => {
@@ -34,6 +56,21 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const oneBook = await bookCollection.findOne(query)
             res.send(oneBook)
+        })
+
+        app.get('/mybook', verifyJwt, async (req, res) => {
+            const email = req.query.email;
+            const decoedEmail = req.decoded.email;
+
+            if (email === decoedEmail) {
+                const query = { email: email };
+                const cursor = bookCollection.find(query);
+                const mybooks = await cursor.toArray();
+                res.send(mybooks)
+            }
+            else {
+                return res.status(403).send({ message: 'Forbiden Access' })
+            }
         })
 
         //update quantity
