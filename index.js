@@ -34,6 +34,7 @@ async function run() {
     try {
         await client.connect();
         const bookCollection = client.db("bookCloset").collection("book");
+        const upcomingCollection = client.db("bookCloset").collection("upcoming");
 
 
         app.post('/login', async (req, res) => {
@@ -101,6 +102,15 @@ async function run() {
 
             const deleteBook = await bookCollection.deleteOne(query);
             res.send(deleteBook);
+        })
+
+
+        //upcoming api
+        app.get('/upcoming', async (req, res) => {
+            const query = {}
+            const cursor = upcomingCollection.find(query);
+            const upcomingBooks = await cursor.toArray();
+            res.send(upcomingBooks);
         })
 
     }
