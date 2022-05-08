@@ -36,7 +36,7 @@ async function run() {
         const bookCollection = client.db("bookCloset").collection("book");
         const upcomingCollection = client.db("bookCloset").collection("upcoming");
 
-
+        //Jwt
         app.post('/login', async (req, res) => {
             const user = req.body;
             const accessToken = await jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2d' });
@@ -45,9 +45,18 @@ async function run() {
 
         //load all books
         app.get('/books', async (req, res) => {
-            const query = {}
-            const cursor = bookCollection.find(query);
-            const allBooks = await cursor.toArray();
+            const page = Number(req.query.page);
+            const size = Number(req.query.size);
+            let allBooks;
+            if (page || size) {
+                const query = {}
+                const cursor = bookCollection.find(query);
+                allBooks = await cursor.skip(size * page).limit(size).toArray()
+            }
+            else {
+
+                allBooks = await cursor.toArray();
+            }
             res.send(allBooks);
         })
 
@@ -72,6 +81,12 @@ async function run() {
             else {
                 return res.status(403).send({ message: 'Forbiden Access' })
             }
+        })
+
+        //pagination
+        app.get('/pagination', async (req, res) => {
+            const count = await bookCollection.countDocuments();
+            res.send({ count });
         })
 
         //update quantity
