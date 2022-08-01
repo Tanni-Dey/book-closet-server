@@ -45,10 +45,18 @@ async function run() {
 
         //load all books
         app.get('/books', async (req, res) => {
+            const page = Number(req.query.page);
+            const size = Number(req.query.size);
             const query = {}
             const cursor = bookCollection.find(query);
-            const allBooks = await cursor.toArray()
+            let allBooks;
+            if (page || size) {
+                allBooks = await cursor.skip(size * page).limit(size).toArray()
+            }
+            else {
 
+                allBooks = await cursor.toArray();
+            }
             res.send(allBooks);
         })
 
@@ -75,7 +83,11 @@ async function run() {
             }
         })
 
-
+        //pagination
+        app.get('/pagination', async (req, res) => {
+            const count = await bookCollection.countDocuments();
+            res.send({ count });
+        })
 
         //update quantity
         app.put('/book/:id', async (req, res) => {
